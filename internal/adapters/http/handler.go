@@ -28,14 +28,6 @@ func NewDishesHandler(service ports.DishesService, logger *slog.Logger) *DishesH
 }
 
 func (d *DishesHandler) GetDishes(w http.ResponseWriter, r *http.Request) {
-	_, err := io.ReadAll(r.Body)
-	if err != nil {
-		d.logger.Error("Не удалось прочитать тело запроса: %v", slog.Any("error", err))
-		http.Error(w, "Не удалось прочитать тело запроса", http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
 	ctx := r.Context()
 
 	dishes, err := d.service.Dishes(ctx)
@@ -46,7 +38,7 @@ func (d *DishesHandler) GetDishes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusAccepted)
 	err = json.NewEncoder(w).Encode(dishes)
 	if err != nil {
 		d.logger.Error("Ошибка кодирования ответа: %v", slog.Any("error", err))

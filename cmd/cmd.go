@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	// "github.com/Ontair/dining-room/internal/".
 	httpAdapter "github.com/Ontair/dining-room/internal/adapters/http"
 	"github.com/Ontair/dining-room/internal/core/memory"
 	"github.com/Ontair/dining-room/internal/core/service"
@@ -28,15 +27,16 @@ func main() {
 	if addr == "" {
 		addr = ":8080"
 	}
-	l.Info("сервер запущен", slog.String("port", addr))
-
+	
 	repo := memory.NewMemoryDishesRepository()
 	dininService := service.NewDishesService(repo, l)
 	server := httpAdapter.NewServer(addr, dininService, l)
-
+	
+	l.Info("Cервер запущен", slog.String("port", server.Addr()))
+	
 	go func() {
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			l.Error("failed to start server: %v", slog.Any("error", err))
+			l.Error("Не удалось запустить сервер: %v", slog.Any("error", err))
 		}
 	}()
 
@@ -47,8 +47,8 @@ func main() {
 	l.Info("Сигнал закрытия")
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		l.Info("server forced to shutdown: %v", slog.Any("error", err))
+		l.Info("Cервер принудительно выключен: %v", slog.Any("error", err))
 	}
 
-	l.Info("сервер закрыт")
+	l.Info("Сервер закрыт")
 }

@@ -16,7 +16,7 @@ var (
 )
 
 type MemoryDishesRepository struct {
-	dishes map[string]*domain.Dish // map[string]*domain.
+	dishes map[string]*domain.Dish
 	mux    sync.RWMutex
 }
 
