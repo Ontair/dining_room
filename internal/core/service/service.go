@@ -12,14 +12,14 @@ import (
 var _ ports.DishesService = (*DishesService)(nil)
 
 type DishesService struct {
-	repo   ports.DishesRepository
-	l *slog.Logger
+	repo ports.DishesRepository
+	l    *slog.Logger
 }
 
 func NewDishesService(repo ports.DishesRepository, l *slog.Logger) *DishesService {
 	return &DishesService{
 		repo: repo,
-		l: l,
+		l:    l,
 	}
 }
 
@@ -28,11 +28,14 @@ func (d *DishesService) CreateDish(ctx context.Context, name, price, description
 
 	dish := domain.NewDishes(id, name, price, descriptions)
 
-	err := d.repo.Create(dish)
+	err := d.repo.Create(ctx, dish)
 	return dish, err
 }
 
-func (d *DishesService) Dishes(){
-	
+func (d *DishesService) Dishes(ctx context.Context) ([]*domain.Dish, error) {
+	dishes, err := d.repo.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return dishes, err
 }
-

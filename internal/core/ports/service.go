@@ -7,8 +7,7 @@ import (
 	"github.com/Ontair/dining-room/internal/domain"
 )
 
-
-type DishesService interface{
-	CreateDish(ctx context.Context ,name, price, descriptions string) (*domain.Dish, error)
-	Dishes()
+type DishesService interface {
+	CreateDish(ctx context.Context, name, price, descriptions string) (*domain.Dish, error)
+	Dishes(ctx context.Context) ([]*domain.Dish, error)
 }

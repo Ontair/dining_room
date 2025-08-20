@@ -4,9 +4,12 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/Ontair/dining-room/internal/core/ports"
 )
+
+var ReadHeaderTimeout = 10 * time.Second
 
 type Server struct {
 	http    *http.Server
@@ -21,8 +24,9 @@ func NewServer(addr string, service ports.DishesService, logger *slog.Logger) *S
 	mux.HandleFunc("POST /dish", handler.CreateDish)
 
 	httpServer := &http.Server{
-		Addr:    addr,
-		Handler: mux,
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: ReadHeaderTimeout,
 	}
 
 	return &Server{

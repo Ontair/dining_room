@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -25,21 +26,21 @@ func NewMemoryDishesRepository() *MemoryDishesRepository {
 	}
 }
 
-func (d *MemoryDishesRepository) GetAll() ([]*domain.Dish, error) {
+func (d *MemoryDishesRepository) GetAll(_ context.Context) ([]*domain.Dish, error) {
 	d.mux.Lock()
 	defer d.mux.Unlock()
-	res := make([]*domain.Dish, len(d.dishes))
+	res := make([]*domain.Dish, 0, len(d.dishes))
 	for _, dish := range d.dishes {
 		res = append(res, dish)
 	}
 	return res, nil
 }
 
-func (d *MemoryDishesRepository) Create(dish *domain.Dish) error{
+func (d *MemoryDishesRepository) Create(_ context.Context, dish *domain.Dish) error {
 	d.mux.Lock()
 	defer d.mux.Unlock()
 
-	if i := d.dishes[dish.ID]; i!=nil{
+	if i := d.dishes[dish.ID]; i != nil {
 		return ErrIsExist
 	}
 	d.dishes[dish.ID] = dish
