@@ -10,15 +10,15 @@ import (
 
 type Server struct {
 	http    *http.Server
-	handler *DiningHandler
+	handler *DishesHandler
 }
 
-func NewServer(addr string, service ports.DiningService, logger *slog.Logger) *Server {
-	handler := NewDiningHandler(service, logger)
+func NewServer(addr string, service ports.DishesService, logger *slog.Logger) *Server {
+	handler := NewDishesHandler(service, logger)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /dinings", handler.GetDinings)
-	mux.HandleFunc("POST /dinings", handler.CreateDinings)
+	mux.HandleFunc("GET /dish", handler.GetDishes)
+	mux.HandleFunc("POST /dish", handler.CreateDish)
 
 	httpServer := &http.Server{
 		Addr:    addr,

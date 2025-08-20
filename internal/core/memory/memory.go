@@ -35,7 +35,7 @@ func (d *MemoryDishesRepository) GetAll() ([]*domain.Dish, error) {
 	return res, nil
 }
 
-func (d *MemoryDishesRepository) CreateDishes(dish *domain.Dish) error{
+func (d *MemoryDishesRepository) Create(dish *domain.Dish) error{
 	d.mux.Lock()
 	defer d.mux.Unlock()
 

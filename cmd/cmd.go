@@ -8,33 +8,47 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	// "github.com/Ontair/dining-room/internal/"
 	httpAdapter "github.com/Ontair/dining-room/internal/adapters/http"
-	"github.com/Ontair/dining-room/internal/adapters/repository"
-
+	"github.com/Ontair/dining-room/internal/core/memory"
+	"github.com/Ontair/dining-room/internal/core/service"
 )
 
 func main(){
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+	
+	l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	addr := os.Getenv("ADDR")
 	if addr == "" {
 		addr = ":8080"
 	}
+	l.Info("Порт рабортаем на порту: %v", addr)
 
-	l := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-
-	repo := repository.NewMemoryDinnerRepository()
-	dininService := service.NewDinnerService(repo, l)
+	repo := memory.NewMemoryDishesRepository()
+	dininService := service.NewDishesService(repo, l)
 	server := httpAdapter.NewServer(addr, dininService, l)
 
 	go func(){
 		if err := server.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed){
-			l.Error("failed to start server: %v", err)
+			l.Error("failed to start server: %v", slog.Any("erroe", err))
 		}
 	}()
 
-	<-ctx.Done()
-	
+
+	<-ctx.Done()	
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	l.Info("Сигнал закрытия")
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		l.Info("server forced to shutdown: %v", slog.Any("error", err))
+	}
+
+	l.Info("сервер закрыт")
+
 }
