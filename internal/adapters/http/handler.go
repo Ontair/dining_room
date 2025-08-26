@@ -44,7 +44,10 @@ func (d *DishesHandler) sendError(w http.ResponseWriter, msgErr error, statusCod
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		d.logger.Error("Failed to encode error response", "error", err)
+		d.logger.Error(
+			"Failed to encode error response",
+			slog.Any("error", err),
+		)
 	}
 }
 
@@ -58,7 +61,10 @@ func (h *DishesHandler) writeJSON(w http.ResponseWriter, statusCode int, data in
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		h.logger.Error("Failed to encode error response", "error", err)
+		h.logger.Error(
+			"Failed to encode error response",
+			slog.Any("error", err),
+		)
 		return err
 	}
 	return nil
@@ -73,7 +79,10 @@ func (d *DishesHandler) GetDishes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := d.writeJSON(w, http.StatusOK, dishes); err != nil {
-		d.logger.Error("Response encoding error", "error", err)
+		d.logger.Error(
+			"Response encoding error",
+			slog.Any("error", err),
+		)
 		return
 	}
 }
@@ -82,7 +91,10 @@ func (d *DishesHandler) CreateDish(w http.ResponseWriter, r *http.Request) {
 	var data dishData
 	err := json.NewDecoder(r.Body).Decode(&data)
 	if err != nil {
-		d.logger.Error("Failed to decode JSON", "error", err)
+		d.logger.Error(
+			"Failed to decode JSON",
+			slog.Any("error", err),
+		)
 		d.sendError(w, err, http.StatusBadRequest)
 		return
 	}
@@ -92,14 +104,20 @@ func (d *DishesHandler) CreateDish(w http.ResponseWriter, r *http.Request) {
 
 	dish, err := d.service.CreateDish(ctx, data.Name, data.Price, data.Descriptions)
 	if err != nil {
-		d.logger.Error("Response encoding error", "error", err)
+		d.logger.Error(
+			"Response encoding error",
+			slog.Any("error", err),
+		)
 		d.sendError(w, err, http.StatusInternalServerError)
 
 		return
 	}
 
 	if err := d.writeJSON(w, http.StatusOK, dish); err != nil {
-		d.logger.Error("Response encoding error", "error", err)
+		d.logger.Error(
+			"Response encoding error",
+			slog.Any("error", err),
+		)
 		return
 	}
 }

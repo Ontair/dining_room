@@ -32,11 +32,17 @@ func main() {
 	dininService := service.NewDishesService(repo, l)
 	server := httpAdapter.NewServer(addr, dininService, l)
 
-	l.Info("server is running", "port", server.Addr())
+	l.Info(
+		"server is running",
+		slog.String("port", server.Addr()),
+	)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			l.Error("failed to start the server", "error", err)
+			l.Error(
+				"failed to start the server",
+				slog.Any("error", err),
+			)
 		}
 	}()
 
@@ -47,8 +53,11 @@ func main() {
 	l.Info("closing signal")
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		l.Info("power server is turned off", "error", err)
+		l.Info(
+			"power server is turned off",
+			slog.Any("error", err),
+		)
 	}
 
-	l.Info("Сервер закрыт")
+	l.Info("server closed")
 }

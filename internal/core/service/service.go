@@ -38,13 +38,16 @@ func (d *DishesService) CreateDish(ctx context.Context, name, price, description
 	if err != nil {
 		d.l.Error(
 			"error creating dish in repository",
-			slog.String("error", err.Error()),
+			slog.Any("error", err),
 			slog.String("id", id),
 		)
 		return nil, err
 	}
 
-	d.l.Debug("dish created successfully", slog.String("id", id))
+	d.l.Debug(
+		"dish created successfully",
+		slog.String("id", id),
+	)
 	return dish, nil
 }
 
@@ -53,7 +56,7 @@ func (d *DishesService) Dishes(ctx context.Context) ([]*domain.Dish, error) {
 	if err != nil {
 		d.l.Error(
 			"error getting list of dishes from repository",
-			slog.String("error", err.Error()),
+			slog.Any("error", err),
 		)
 		return nil, err
 	}
