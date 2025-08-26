@@ -26,20 +26,16 @@ func NewDishesHandler(service ports.DishesService, logger *slog.Logger) *DishesH
 	}
 }
 
-// Response представляет стандартный формат ответа.
-type Response struct {
-	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   error       `json:"error,omitempty"`
+type Error struct{
+	Error string `json:"error"`
 }
 
 // sendError вспомогательная функция для отправки ошибок.
-func (d *DishesHandler) sendError(w http.ResponseWriter, msgErr error, statusCode int) {
+func (d *DishesHandler) sendError(w http.ResponseWriter, msgErr string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
-	response := Response{
-		Success: false,
+	response := Error{
 		Error:   msgErr,
 	}
 
@@ -55,12 +51,7 @@ func (h *DishesHandler) writeJSON(w http.ResponseWriter, statusCode int, data in
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
-	response := Response{
-		Success: true,
-		Data:    data,
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.logger.Error(
 			"Failed to encode error response",
 			slog.Any("error", err),
@@ -75,7 +66,7 @@ func (d *DishesHandler) GetDishes(w http.ResponseWriter, r *http.Request) {
 
 	dishes, err := d.service.Dishes(ctx)
 	if err != nil {
-		d.sendError(w, err, http.StatusInternalServerError)
+		d.sendError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	if err := d.writeJSON(w, http.StatusOK, dishes); err != nil {
@@ -95,7 +86,7 @@ func (d *DishesHandler) CreateDish(w http.ResponseWriter, r *http.Request) {
 			"Failed to decode JSON",
 			slog.Any("error", err),
 		)
-		d.sendError(w, err, http.StatusBadRequest)
+		d.sendError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
@@ -108,7 +99,7 @@ func (d *DishesHandler) CreateDish(w http.ResponseWriter, r *http.Request) {
 			"Response encoding error",
 			slog.Any("error", err),
 		)
-		d.sendError(w, err, http.StatusInternalServerError)
+		d.sendError(w, err.Error(), http.StatusInternalServerError)
 
 		return
 	}
