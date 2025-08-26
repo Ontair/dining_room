@@ -27,8 +27,8 @@ func NewMemoryDishesRepository() *MemoryDishesRepository {
 }
 
 func (d *MemoryDishesRepository) GetAll(_ context.Context) ([]*domain.Dish, error) {
-	d.mux.Lock()
-	defer d.mux.Unlock()
+	d.mux.RLock()
+	defer d.mux.RUnlock()
 	res := make([]*domain.Dish, 0, len(d.dishes))
 	for _, dish := range d.dishes {
 		res = append(res, dish)

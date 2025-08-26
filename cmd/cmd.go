@@ -11,11 +11,11 @@ import (
 	"time"
 
 	httpAdapter "github.com/Ontair/dining-room/internal/adapters/http"
-	"github.com/Ontair/dining-room/internal/core/memory"
+	"github.com/Ontair/dining-room/internal/adapters/memory"
 	"github.com/Ontair/dining-room/internal/core/service"
 )
 
-var shutdownTimeout = 5 * time.Second
+const shutdownTimeout = 5 * time.Second
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -27,16 +27,16 @@ func main() {
 	if addr == "" {
 		addr = ":8080"
 	}
-	
+
 	repo := memory.NewMemoryDishesRepository()
 	dininService := service.NewDishesService(repo, l)
 	server := httpAdapter.NewServer(addr, dininService, l)
-	
-	l.Info("Cервер запущен", slog.String("port", server.Addr()))
-	
+
+	l.Info("server is running", "port", server.Addr())
+
 	go func() {
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			l.Error("Не удалось запустить сервер: %v", slog.Any("error", err))
+			l.Error("failed to start the server", "error", err)
 		}
 	}()
 
@@ -44,10 +44,10 @@ func main() {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
-	l.Info("Сигнал закрытия")
+	l.Info("closing signal")
 
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		l.Info("Cервер принудительно выключен: %v", slog.Any("error", err))
+		l.Info("power server is turned off", "error", err)
 	}
 
 	l.Info("Сервер закрыт")

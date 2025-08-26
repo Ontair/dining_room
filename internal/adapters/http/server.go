@@ -9,7 +9,7 @@ import (
 	"github.com/Ontair/dining-room/internal/core/ports"
 )
 
-var ReadHeaderTimeout = 10 * time.Second
+const ReadHeaderTimeout = 10 * time.Second
 
 type Server struct {
 	http    *http.Server
