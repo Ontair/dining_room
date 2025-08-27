@@ -42,7 +42,9 @@ func (rc *RequestCounter) WriteGetCount() error {
 
 	content := fmt.Sprintf("GET Requests: %d\nLast Updated: %s\n",
 		count, time.Now().UTC())
-
+	
+	rc.mu.Lock()
+    defer rc.mu.Unlock()
 	return os.WriteFile(rc.getFile, []byte(content), 0644)
 }
 
