@@ -37,10 +37,6 @@ func (rc *RequestCounter) IncrementPost() {
 	rc.postCount.Add(1)
 }
 
-func (rc *RequestCounter) GetCounts() (uint64, uint64) {
-	return rc.getCount.Load(), rc.postCount.Load()
-}
-
 func (rc *RequestCounter) WriteGetCount() error {
 	count := rc.getCount.Load()
 
