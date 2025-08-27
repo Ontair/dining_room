@@ -16,59 +16,49 @@ type Middleware func(http.HandlerFunc) http.HandlerFunc
 
 type RequestCounter struct {
 	mu        sync.RWMutex
-	GetCount  atomic.Uint64
-	PostCount atomic.Uint64
-	GetFile   string
-	PostFile  string
+	getCount  atomic.Uint64
+	postCount atomic.Uint64
+	getFile   string
+	postFile  string
 }
 
 func NewRequestCounter(getFile, postFile string) *RequestCounter {
 	return &RequestCounter{
-		GetFile:  getFile,
-		PostFile: postFile,
+		getFile:  getFile,
+		postFile: postFile,
 	}
 }
 
 func (rc *RequestCounter) IncrementGet() {
-	rc.mu.Lock()
-	defer rc.mu.Unlock()
-	rc.GetCount.Add(1)
+	rc.getCount.Add(1)
 }
 
 func (rc *RequestCounter) IncrementPost() {
-	rc.mu.Lock()
-	defer rc.mu.Unlock()
-	rc.PostCount.Add(1)
+	rc.postCount.Add(1)
 }
 
 func (rc *RequestCounter) GetCounts() (uint64, uint64) {
-	rc.mu.RLock()
-	defer rc.mu.RUnlock()
-	return rc.GetCount.Load(), rc.PostCount.Load()
+	return rc.getCount.Load(), rc.postCount.Load()
 }
 
 func (rc *RequestCounter) WriteGetCount() error {
-	rc.mu.RLock()
-	count := rc.GetCount.Load()
-	rc.mu.RUnlock()
+	count := rc.getCount.Load()
 
 	content := fmt.Sprintf("GET Requests: %d\nLast Updated: %s\n",
 		count, time.Now().UTC())
 
-	return os.WriteFile(rc.GetFile, []byte(content), 0644)
+	return os.WriteFile(rc.getFile, []byte(content), 0644)
 }
 
 func (rc *RequestCounter) WritePostCount() error {
-	rc.mu.RLock()
-	count := rc.PostCount.Load()
-	rc.mu.RUnlock()
+	count := rc.postCount.Load()
 
 	content := fmt.Sprintf("POST Requests: %d\nLast Updated: %s\n",
 		count, time.Now().UTC())
 
 	rc.mu.Lock()
     defer rc.mu.Unlock()
-	return os.WriteFile(rc.PostFile, []byte(content), 0644)
+	return os.WriteFile(rc.postFile, []byte(content), 0644)
 }
 
 // CompileMiddleware takes the base http.HandlerFunc h
@@ -94,10 +84,10 @@ func CreateCountRequestMiddleware(counter *RequestCounter) Middleware {
 			switch r.Method {
 			case "GET":
 				counter.IncrementGet()
-				slog.Info("GET request counted", "total_get", counter.GetCount.Load())
+				slog.Info("GET request counted", "total_get", counter.getCount.Load())
 			case "POST":
 				counter.IncrementPost()
-				slog.Info("POST request counted", "total_post", counter.PostCount.Load())
+				slog.Info("POST request counted", "total_post", counter.postCount.Load())
 			}
 			h.ServeHTTP(w, r)
 		})
