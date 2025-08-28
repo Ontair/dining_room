@@ -10,12 +10,11 @@ import (
 	"time"
 )
 
-// Middleware is func type that allows for
-// chaining middleware
+// chaining middleware.
 type Middleware func(http.HandlerFunc) http.HandlerFunc
 
 type RequestCounter struct {
-	mu        sync.RWMutex
+	mu        sync.Mutex
 	getCount  atomic.Uint64
 	postCount atomic.Uint64
 	getFile   string
@@ -42,10 +41,10 @@ func (rc *RequestCounter) WriteGetCount() error {
 
 	content := fmt.Sprintf("GET Requests: %d\nLast Updated: %s\n",
 		count, time.Now().UTC())
-	
+
 	rc.mu.Lock()
-    defer rc.mu.Unlock()
-	return os.WriteFile(rc.getFile, []byte(content), 0644)
+	defer rc.mu.Unlock()
+	return os.WriteFile(rc.getFile, []byte(content), 0600)
 }
 
 func (rc *RequestCounter) WritePostCount() error {
@@ -55,12 +54,11 @@ func (rc *RequestCounter) WritePostCount() error {
 		count, time.Now().UTC())
 
 	rc.mu.Lock()
-    defer rc.mu.Unlock()
-	return os.WriteFile(rc.postFile, []byte(content), 0644)
+	defer rc.mu.Unlock()
+	return os.WriteFile(rc.postFile, []byte(content), 0600)
 }
 
-// CompileMiddleware takes the base http.HandlerFunc h
-// and wraps it around the given list of Middleware m
+// and wraps it around the given list of Middleware m.
 func CompileMiddleware(h http.HandlerFunc, middlewareFunc []Middleware) http.HandlerFunc {
 	if len(middlewareFunc) < 1 {
 		return h
@@ -76,37 +74,24 @@ func CompileMiddleware(h http.HandlerFunc, middlewareFunc []Middleware) http.Han
 	return wrapped
 }
 
-func CreateCountRequestMiddleware(counter *RequestCounter) Middleware {
+func CreateCountAndWriteRequestMiddleware(counter *RequestCounter) Middleware {
 	return func(h http.HandlerFunc) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
 			switch r.Method {
-			case "GET":
+			case http.MethodGet:
 				counter.IncrementGet()
 				slog.Info("GET request counted", "total_get", counter.getCount.Load())
-			case "POST":
-				counter.IncrementPost()
-				slog.Info("POST request counted", "total_post", counter.postCount.Load())
-			}
-			h.ServeHTTP(w, r)
-		})
-	}
-}
-
-func CreateWriteTxtMiddleware(counter *RequestCounter) Middleware {
-	return func(h http.HandlerFunc) http.HandlerFunc {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r)
-
-			switch r.Method {
-			case "GET":
 				if err := counter.WriteGetCount(); err != nil {
 					slog.Error("Failed to write GET count to file", "error", err)
 				}
-			case "POST":
+			case http.MethodPost:
+				counter.IncrementPost()
+				slog.Info("POST request counted", "total_post", counter.postCount.Load())
 				if err := counter.WritePostCount(); err != nil {
 					slog.Error("Failed to write POST count to file", "error", err)
 				}
 			}
-		})
+			h.ServeHTTP(w, r)
+		}
 	}
 }

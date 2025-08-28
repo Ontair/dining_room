@@ -16,8 +16,6 @@ type Server struct {
 	handler *DishesHandler
 }
 
-
-
 func NewServer(addr string, service ports.DishesService, logger *slog.Logger) *Server {
 	handler := NewDishesHandler(service, logger)
 
@@ -25,17 +23,14 @@ func NewServer(addr string, service ports.DishesService, logger *slog.Logger) *S
 
 	counter := NewRequestCounter("get_count.txt", "post_count.txt")
 
-
 	// Define our middleware stack
 	// These run in the order given
 	stackDish := []Middleware{
-		CreateCountRequestMiddleware(counter),
-		CreateWriteTxtMiddleware(counter),
+		CreateCountAndWriteRequestMiddleware(counter),
 	}
 
 	mux.HandleFunc("GET /dish", CompileMiddleware(handler.GetDishes, stackDish))
 	mux.HandleFunc("POST /dish", CompileMiddleware(handler.CreateDish, stackDish))
-
 
 	httpServer := &http.Server{
 		Addr:              addr,

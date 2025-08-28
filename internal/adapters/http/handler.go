@@ -26,7 +26,7 @@ func NewDishesHandler(service ports.DishesService, logger *slog.Logger) *DishesH
 	}
 }
 
-type Error struct{
+type Error struct {
 	Error string `json:"error"`
 }
 
@@ -36,7 +36,7 @@ func (d *DishesHandler) sendError(w http.ResponseWriter, msgErr string, statusCo
 	w.WriteHeader(statusCode)
 
 	response := Error{
-		Error:   msgErr,
+		Error: msgErr,
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
